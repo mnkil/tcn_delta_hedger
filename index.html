@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>toucan oms</title>
+  <style>
+    /* Base styles */
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #F4F4F6;
+      color: #333333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Optional header (if you need one) */
+    #header {
+      background-color: #0077FF;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    #header h1 {
+      margin: 0;
+    }
+
+    /* Toolbar styles */
+    #toolbar {
+      background-color: #2c3e50;
+      color: white;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    
+    #toolbar h3 {
+      margin: 0 20px 0 0;
+      font-size: 16px;
+    }
+    
+    .toolbar-btn {
+      background-color: transparent;
+      border: none;
+      color: white;
+      font-size: 18px;
+      padding: 5px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    
+    .toolbar-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .toolbar-btn.play {
+      color: #2ecc71;
+    }
+    
+    .toolbar-btn.pause {
+      color: #f39c12;
+    }
+    
+    .toolbar-btn.stop {
+      color: #e74c3c;
+    }
+    
+    .toolbar-separator {
+      height: 24px;
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.2);
+      margin: 0 12px;
+    }
+
+    /* Container for the top two panels (existing content & debug) */
+    #top-panels {
+      height: calc(50vh - 40px); /* adjusted to account for toolbar */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Main content area (table container and table) */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    
+    .trade-table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      background: white;
+      border-radius: 4px;
+      overflow: hidden;
+      font-size: 12px;
+    }
+    .trade-table th,
+    .trade-table td {
+      padding: 3px;
+      text-align: left;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .trade-table thead {
+      background-color: #0077FF;
+      color: white;
+    }
+    .trade-table tbody tr:nth-child(even) {
+      background-color: #F9F9F9;
+    }
+    .trade-table tbody tr:hover {
+      background-color: #FFD700;
+      color: #333333;
+    }
+    #table-container {
+      overflow-x: auto; /* Enable horizontal scrolling */
+      display: block;
+    }
+    
+    /* Debug panel (existing) */
+    #debug-panel {
+      background-color: #eaeaea;
+      border-top: 1px solid #ccc;
+      padding: 10px;
+      font-size: 12px;
+      overflow-y: auto;
+      height: 75px; /* fixed height as before */
+      flex-shrink: 0;
+    }
+    
+    /* New third panel that occupies the bottom half */
+    #third-panel {
+      height: calc(50vh - 30px); /* Adjusted to account for status bar */
+      overflow-y: auto;
+      background-color: #dcdcdc; /* different background to distinguish it */
+      border-top: 1px solid #aaa;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    /* Status bar styles */
+    #status-bar {
+      background-color: #34495e;
+      color: white;
+      padding: 5px 16px;
+      font-size: 12px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    #status-message {
+      flex-grow: 1;
+    }
+    
+    #status-timestamp {
+      font-style: italic;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <h3>TCN Controls</h3>
+    <button id="play-btn" class="toolbar-btn play" title="Start processing">
+      <i class="fas fa-play"></i>
+    </button>
+    <button id="pause-btn" class="toolbar-btn pause" title="Pause processing">
+      <i class="fas fa-pause"></i>
+    </button>
+    <button id="stop-btn" class="toolbar-btn stop" title="Stop processing">
+      <i class="fas fa-stop"></i>
+    </button>
+    <div class="toolbar-separator"></div>
+    <span id="toolbar-status">Ready</span>
+  </div>
+  
+  <!-- Top half: existing two panels (content and debug) -->
+  <div id="top-panels">
+    <div id="content">
+      <div id="table-container"></div>
+      <table class="trade-table">
+        <thead>
+          <tr>
+            <th>source</th>
+            <th>id</th>
+            <th>account-number</th>
+            <th>action</th>
+            <th>quantity</th>
+            <th>symbol</th>
+            <th>price</th>
+            <th>commission</th>
+            <th>currency</th>
+            <th>exec-id</th>
+            <th>exchange</th>
+            <th>executed-at</th>
+            <th>instrument-type</th>
+            <th>description</th>
+            <th>destination-venue</th>
+            <th>ext-exchange-order-number</th>
+            <th>ext-exec-id</th>
+            <th>ext-global-order-number</th>
+            <th>ext-group-fill-id</th>
+            <th>ext-group-id</th>
+            <th>is-estimated-fee</th>
+            <th>leg-count</th>
+            <th>net-value</th>
+            <th>net-value-effect</th>
+            <th>order-id</th>
+            <th>transaction-date</th>
+            <th>transaction-sub-type</th>
+            <th>transaction-type</th>
+            <th>underlying-symbol</th>
+            <th>value</th>
+            <th>value-effect</th>
+            <th>clearing-fees</th>
+            <th>clearing-fees-effect</th>
+            <th>commission-effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Existing table rows will populate here -->
+        </tbody>
+      </table>
+    </div>
+    <div id="debug-panel">
+      [00:00:00] Debug panel initialized.
+    </div>
+  </div>
+  
+<!-- Third panel (bottom half) -->
+<div id="third-panel">
+  <h2>Option Controls</h2>
+  
+  <!-- Button to initialize the OptionsClass instance -->
+  <button id="init-option-btn">Initialize Option(s)</button>
+  <div id="init-option-result"></div>
+  <hr/>
+  
+  <!-- Buttons to execute OptionsClass functions -->
+  <div>
+    <button id="get-total-pnl-btn">Get Total PnL TOS</button>
+    <span id="get-total-pnl-result"></span>
+  </div>
+  <div>
+    <button id="get-total-exposure-btn">Get Total Exposure</button>
+    <span id="get-total-exposure-result"></span>
+  </div>
+  <div>
+    <button id="get-opt-exposure-btn">Get Option Exposure</button>
+    <span id="get-opt-exposure-result"></span>
+  </div>
+  <div>
+    <button id="get-hedge-pnl-btn">Get Hedge PnL TOS</button>
+    <span id="get-hedge-pnl-result"></span>
+  </div>
+  <div>
+    <button id="get-option-pnl-btn">Get Option PnL TOS</button>
+    <span id="get-option-pnl-result"></span>
+  </div>
+  
+  <hr/>
+  <!-- Controls for the interval system -->
+  <div>
+    <label for="interval-input">Interval (seconds): </label>
+    <input type="number" id="interval-input" min="1" value="10"/>
+    <button id="start-interval-btn">Start Delta Hedger</button>
+    <button id="stop-interval-btn">Stop Delta Hedger</button>
+  </div>
+  <div id="interval-status"></div>
+</div>
+
+<!-- Status bar at bottom of screen -->
+<div id="status-bar">
+  <div id="status-message">Ready</div>
+  <div id="status-timestamp"></div>
+</div>
+  
+  <script src="renderer.js"></script>
+</body>
+</html>
